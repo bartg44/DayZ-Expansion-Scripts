@@ -7,9 +7,23 @@ class eAIItemTargetInformation: eAIEntityTargetInformation
 		Class.CastTo(m_Item, target);
 	}
 
+	void UpdateItemInfo()
+	{
+	}
+
 	override bool IsInanimate()
 	{
 		return true;
+	}
+
+	override bool IsExplosive()
+	{
+		return m_Item.Expansion_IsExplosive();
+	}
+
+	override bool IsMechanicalTrap()
+	{
+		return m_Item.Expansion_IsMechanicalTrap();
 	}
 
 	override bool IsActive()
@@ -95,6 +109,9 @@ class eAIItemTargetInformation: eAIEntityTargetInformation
 				Weapon_Base gun;
 				if (Class.CastTo(gun, m_Item))
 				{
+					if (target && target.IsMechanicalTrap() && (!itemInHands || itemInHands.Expansion_IsMeleeWeapon()))
+						return 0.0;
+
 					Magazine mag;
 
 					//! Ignore guns we don't have ammo for so we don't keep picking up guns that we can't use

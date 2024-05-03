@@ -475,6 +475,10 @@ class eAICommandManagerClient : eAICommandManager
 
 		g.AddWaypoint(position);
 		g.SetWaypointBehaviourAuto(eAIWaypointBehavior.ONCE);
+
+		eAIBase ai;
+		if (g.GetWaypoints().Count() == 1 && Class.CastTo(ai, g.GetFormationLeader()))
+			ai.GetPathFinding().ForceRecalculate(true);
 	}
 
 	void RPC_ExportPatrol(PlayerIdentity sender, Object target, ParamsReadContext ctx)
