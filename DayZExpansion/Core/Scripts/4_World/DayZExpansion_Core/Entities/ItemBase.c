@@ -30,6 +30,7 @@ modded class ItemBase
 
 	protected ref map<string, float> m_Expansion_HealthBeforeHit;
 	protected float m_Expansion_DamageMultiplier = 1.0;
+    protected ref array<string> m_Expansion_ZoneNames;
 
 	bool m_Expansion_AcceptingAttachment;
 	bool m_Expansion_CanPlayerAttach;
@@ -67,6 +68,7 @@ modded class ItemBase
 		if (IsMissionHost())
 		{
 			m_Expansion_HealthBeforeHit = new map<string, float>;
+			m_Expansion_ZoneNames = new array<string>;
 		}
 
 		string destroySound = GetDestroySound();
@@ -616,13 +618,6 @@ modded class ItemBase
 		EXTrace.PrintHit(EXTrace.GENERAL_ITEMS, this, "EEHitBy", damageResult, damageType, source, component, dmgZone, ammo, modelPos, speedCoef);
 #endif
 
-		string damageZone = dmgZone;
-		if (damageZone == "")
-			damageZone = "GlobalHealth";
-
-		float health = m_Expansion_HealthBeforeHit[dmgZone];
-		float dmg = damageResult.GetDamage(damageZone, "Health");
-
 		bool applyDamageCorrection;
 		if ((damageType == DT_EXPLOSION || damageType == DT_FIRE_ARM) && m_Expansion_DamageMultiplier != 1.0)
 			applyDamageCorrection = true;
@@ -638,11 +633,15 @@ modded class ItemBase
 			if (!GetHierarchyParent() && source && !source.GetHierarchyRootPlayer())
 			{
 				float baseDmg = ExpansionDamageSystem.GetExplosionDamage(source, this, ammo);
-				if (baseDmg > dmg)
-				{
-					ExpansionDamageSystem.Log("Overriding " + source.ToString() + " damage dealt to " + ToString() + " at " + GetPosition() + " " + dmg.ToString() + " -> " + baseDmg.ToString());
-					dmg = baseDmg;
-					applyDamageCorrection = true;
+				
+				foreach(string zone, float health : m_Expansion_HealthBeforeHit) {
+					float dmg = damageResult.GetDamage(zone, "Health");
+					if (baseDmg > dmg)
+					{
+						ExpansionDamageSystem.Log("Overriding " + source.ToString() + " damage dealt to " + ToString() + " at " + GetPosition() + " " + dmg.ToString() + " -> " + baseDmg.ToString());
+						dmg = baseDmg;
+						applyDamageCorrection = true;
+					}
 				}
 			}
 		}
@@ -652,8 +651,11 @@ modded class ItemBase
 			//! damageMultiplier > 1 applies bonus damage
 			//! damageMultiplier < 1 negates damage (partly if multiplier > 0 or fully if 0)
 			//! damageMultiplier == 1 effectively does nothing
-			if (health > 0)
-				SetHealth(damageZone, "Health", Math.Max(health - (dmg * m_Expansion_DamageMultiplier), 0));
+			foreach(string zone, float health : m_Expansion_HealthBeforeHit) {
+				float dmg = damageResult.GetDamage(zone, "Health");
+				if (health > 0)
+					SetHealth(zone, "Health", Math.Max(health - (dmg * m_Expansion_DamageMultiplier), 0));
+			}
 		}
 
 #ifdef EXPANSIONMODBASEBUILDING
@@ -699,7 +701,12 @@ modded class ItemBase
 			}
 		}
 
-		m_Expansion_HealthBeforeHit[dmgZone] = GetHealth(dmgZone, "Health");
+		if (m_Expansion_ZoneNames.Count() == 0)
+			GetDamageZones(m_Expansion_ZoneNames);
+
+		foreach (string zoneName : m_Expansion_ZoneNames) {
+			m_Expansion_HealthBeforeHit[zoneName] = GetHealth(zoneName, "Health");
+		}
 
 		return true;
 	}
