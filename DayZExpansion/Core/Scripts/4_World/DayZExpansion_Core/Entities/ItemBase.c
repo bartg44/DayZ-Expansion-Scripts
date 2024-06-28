@@ -30,7 +30,7 @@ modded class ItemBase
 
 	protected ref map<string, float> m_Expansion_HealthBeforeHit;
 	protected float m_Expansion_DamageMultiplier = 1.0;
-    protected ref array<string> m_Expansion_ZoneNames;
+	protected ref array<string> m_Expansion_ZoneNames;
 
 	bool m_Expansion_AcceptingAttachment;
 	bool m_Expansion_CanPlayerAttach;
@@ -703,6 +703,9 @@ modded class ItemBase
 
 		if (m_Expansion_ZoneNames.Count() == 0)
 			GetDamageZones(m_Expansion_ZoneNames);
+
+		if (m_Expansion_ZoneNames.Count() == 0)
+			m_Expansion_ZoneNames.Insert("");
 
 		foreach (string zoneName : m_Expansion_ZoneNames) {
 			m_Expansion_HealthBeforeHit[zoneName] = GetHealth(zoneName, "Health");
